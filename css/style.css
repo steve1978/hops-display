@@ -49,8 +49,20 @@ body {
 }
 .brand {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
+}
+.brand-logo {
+  width: 50px;
+  height: 50px;
+  flex: none;
+  display: block;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
 }
 .brand .mark {
   font-family: 'Anton', sans-serif;
@@ -116,6 +128,7 @@ body.tv {
   transform-origin: center center;
 }
 .stage .topbar { padding: 30px 48px 22px; }
+.stage .brand-logo { width: 74px; height: 74px; }
 .stage .brand .mark { font-size: 44px; }
 .stage .brand .tagline { font-size: 15px; }
 .stage .btn { font-size: 18px; padding: 14px 26px; }
