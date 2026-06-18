@@ -1,0 +1,21 @@
+name = "hops-display"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+
+# Public origin allowed to call this Worker.
+# Use "*" while testing; set to your GitHub Pages origin for production,
+# e.g. "https://YOURNAME.github.io"
+[vars]
+ALLOW_ORIGIN = "https://steve1978.github.io"
+
+# KV namespace that stores the published 4-beer layout.
+# Create it once:  wrangler kv namespace create BEERS
+# then paste the returned id below.
+[[kv_namespaces]]
+binding = "BEERS"
+id = "7bb1007e196f4c7b97847fbd73e6c263"
+
+# Secrets (do NOT put these here — set them with `wrangler secret put`):
+#   wrangler secret put ADMIN_USER
+#   wrangler secret put ADMIN_PASS
+#   wrangler secret put SESSION_SECRET
