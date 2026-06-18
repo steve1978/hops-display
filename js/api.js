@@ -41,6 +41,18 @@ const API = (() => {
       });
     },
 
+    // Admin: rewrite a beer's description with Cheshire wit (token required).
+    rewrite(beer, token) {
+      return req("/api/rewrite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token,
+        },
+        body: JSON.stringify(beer),
+      });
+    },
+
     // Admin: save the 4-beer layout (token required).
     saveBeers(beers, token) {
       return req("/api/beers", {

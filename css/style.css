@@ -355,6 +355,23 @@ input.inp:focus { outline: none; border-color: var(--accent); }
 .slot .filled .nm { font-weight: 600; }
 .slot .filled .by { color: var(--muted); font-size: 13px; }
 .slot .empty-slot { color: var(--muted); font-size: 14px; padding: 10px 0; }
+textarea.slot-desc {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 10px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: vertical;
+  margin-top: 6px;
+}
+textarea.slot-desc:focus { outline: none; border-color: var(--accent); }
+textarea.slot-desc:disabled { opacity: .6; }
+.slot-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.btn-sm { font-size: 11px; padding: 7px 12px; }
 
 /* Search results */
 .results { display: grid; gap: 10px; margin-top: 10px; }

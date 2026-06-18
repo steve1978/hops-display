@@ -55,23 +55,65 @@
               <div class="nm">${esc(b.name)}</div>
               <div class="by">${esc(b.brewery || "")} ${b.abv ? "· " + esc(b.abv) : ""}</div>
             </div>
+          </div>
+          <label class="fld" style="margin:12px 0 0">
+            Description ${b._rewriting ? '<span class="spinner"></span> writing a Cheshire take…' : ""}
+          </label>
+          <textarea class="slot-desc" data-i="${i}" rows="4" ${b._rewriting ? "disabled" : ""}>${esc(b.description || "")}</textarea>
+          <div class="slot-actions">
+            <button class="btn btn-sm" data-i="${i}" data-act="rewrite" ${b._rewriting ? "disabled" : ""}>↻ Funnier take</button>
+            ${b.descriptionOriginal ? `<button class="btn btn-sm" data-i="${i}" data-act="orig">Use Untappd original</button>` : ""}
           </div>` : `<div class="empty-slot">Empty — search above, or “Assign here”.</div>`}
       `;
       host.appendChild(div);
     }
     host.querySelectorAll("button[data-act]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const i = +btn.dataset.target;
-        if (btn.dataset.act === "clear") {
+        const i = +(btn.dataset.target != null ? btn.dataset.target : btn.dataset.i);
+        const act = btn.dataset.act;
+        if (act === "clear") {
           beers[i] = null;
           renderSlots();
-        } else {
+        } else if (act === "rewrite") {
+          regenerateDesc(i);
+        } else if (act === "orig") {
+          if (beers[i]) { beers[i].description = beers[i].descriptionOriginal || beers[i].description; renderSlots(); }
+        } else { // assign / replace
           pendingTarget = i;
           $("searchInput").focus();
           toast(`Next pick goes to Tap ${i + 1}`, "ok");
         }
       });
     });
+    // Keep edits to the description in sync with the working copy.
+    host.querySelectorAll("textarea.slot-desc").forEach((ta) => {
+      ta.addEventListener("input", () => {
+        const i = +ta.dataset.i;
+        if (beers[i]) beers[i].description = ta.value;
+      });
+    });
+  }
+
+  // Ask the Worker (OpenRouter) for a funnier take on a slot's description.
+  async function regenerateDesc(i) {
+    const b = beers[i];
+    if (!b) return;
+    const source = b.descriptionOriginal || b.description || "";
+    b._rewriting = true;
+    renderSlots();
+    try {
+      const data = await API.rewrite(
+        { name: b.name, brewery: b.brewery, style: b.style, abv: b.abv, description: source },
+        token
+      );
+      if (data && data.description) b.description = data.description;
+    } catch (e) {
+      if (/401|unauth/i.test(e.message)) { logout(); toast("Session expired — log in again.", "err"); return; }
+      toast("AI rewrite failed (kept current text): " + e.message, "err");
+    } finally {
+      b._rewriting = false;
+      renderSlots();
+    }
   }
 
   // ---------- search ----------
@@ -114,12 +156,17 @@
       const data = await API.scrape(r.url);
       const beer = data && data.beer;
       if (!beer || !beer.name) throw new Error("Could not read that beer page");
-      beers[pendingTarget] = beer;
+      // Keep the Untappd text so the landlord can revert at any time.
+      beer.descriptionOriginal = beer.description || "";
+      const idx = pendingTarget;
+      beers[idx] = beer;
       renderSlots();
-      toast(`Added “${beer.name}” to Tap ${pendingTarget + 1}`, "ok");
+      toast(`Added “${beer.name}” to Tap ${idx + 1}`, "ok");
       // advance to next empty slot for convenience
       const next = beers.findIndex((b) => !b);
       if (next !== -1) pendingTarget = next;
+      // Auto-generate the Cheshire rewrite (non-blocking; keeps original on failure).
+      regenerateDesc(idx);
     } catch (e) {
       toast("Couldn't load that beer: " + e.message, "err");
     } finally {

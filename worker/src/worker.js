@@ -44,6 +44,9 @@ export default {
       if (url.pathname === "/api/login" && request.method === "POST")
         return await login(request, env, cors);
 
+      if (url.pathname === "/api/rewrite" && request.method === "POST")
+        return await rewriteRoute(request, env, cors);
+
       return json({ error: "Not found" }, 404, cors);
     } catch (err) {
       return json({ error: err.message || "Server error" }, 500, cors);
@@ -132,6 +135,70 @@ async function requireAuth(request, env) {
   const token = hdr.replace(/^Bearer\s+/i, "");
   const expected = await makeToken(env);
   return token && token === expected;
+}
+
+// ───────────── AI rewrite (OpenRouter) ─────────────
+// Auth-gated so the API key can't be abused via a public endpoint.
+async function rewriteRoute(request, env, cors) {
+  if (!(await requireAuth(request, env)))
+    return json({ error: "Unauthorized" }, 401, cors);
+  if (!env.OPENROUTER_API_KEY)
+    return json({ error: "AI not set up — add the OPENROUTER_API_KEY secret" }, 400, cors);
+  const beer = await request.json().catch(() => ({}));
+  const description = await rewriteDescription(beer, env);
+  return json({ description }, 200, cors);
+}
+
+async function rewriteDescription(beer, env) {
+  const model = env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
+
+  const system =
+    "You write the beer descriptions for the chalkboard at Indie Hops, an " +
+    "independent pub in Cheshire, England. Take the brewer's official blurb and " +
+    "rewrite it in your own words with dry British wit and a touch of cheeky " +
+    "Cheshire charm — picture a clever landlord who genuinely loves good beer. " +
+    "Rules: at most two short sentences (about 40 words total); no emojis, " +
+    "hashtags or surrounding quotation marks; never invent specific facts, " +
+    "numbers, awards or ingredients that aren't in the source; keep it " +
+    "family-friendly; make the beer sound tempting and genuinely funny, not " +
+    "cheesy. Reply with ONLY the finished description text.";
+
+  const user =
+    `Beer: ${beer.name || "Unknown"}${beer.brewery ? " by " + beer.brewery : ""}.` +
+    `${beer.style ? " Style: " + beer.style + "." : ""}` +
+    `${beer.abv ? " ABV: " + beer.abv + "." : ""}\n\n` +
+    `Brewer's official description:\n"""${(beer.description || "").slice(0, 1200)}"""\n\n` +
+    `Write the Indie Hops version.`;
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + env.OPENROUTER_API_KEY,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://steve1978.github.io/hops-display/",
+      "X-Title": "Indie Hops Display",
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.9,
+      max_tokens: 180,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error("OpenRouter " + res.status + ": " + t.slice(0, 240));
+  }
+  const data = await res.json();
+  let out = (data.choices && data.choices[0] && data.choices[0].message &&
+    data.choices[0].message.content) || "";
+  out = out.trim().replace(/^["'“‘]+|["'”’]+$/g, "").trim();
+  if (!out) throw new Error("AI returned an empty description");
+  return out;
 }
 
 // ───────────── storage ─────────────

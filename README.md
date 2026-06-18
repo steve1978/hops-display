@@ -82,6 +82,28 @@ cd worker && npx wrangler dev          # backend on http://localhost:8787
 # set js/config.js API_BASE to http://localhost:8787, then open index.html
 ```
 
+## AI description rewrites (optional)
+
+When a staff member picks a beer, the Worker can rewrite Untappd's blurb in the
+pub's own dry, Cheshire voice via a **free OpenRouter model**. The original text
+is kept, and the rewrite is editable + regenerable in the console before you
+publish. To enable it:
+
+```bash
+cd worker
+npx wrangler secret put OPENROUTER_API_KEY    # paste your OpenRouter key
+npx wrangler deploy
+```
+
+- The key lives only as a Cloudflare secret — never in the repo or the browser.
+- The rewrite endpoint is auth-gated (staff login required) so the key can't be
+  abused publicly.
+- Default model: `meta-llama/llama-3.3-70b-instruct:free`. Override by adding
+  `OPENROUTER_MODEL = "…"` under `[vars]` in `wrangler.toml`.
+- Some free models need "model training" / prompt-logging allowed in your
+  OpenRouter privacy settings, and free tiers can rate-limit (HTTP 429). If a
+  rewrite fails, the console keeps the existing text and tells you why.
+
 ## Notes & limits
 
 - **On-demand only.** Untappd is fetched just when a staff member searches or
