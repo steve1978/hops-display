@@ -153,22 +153,27 @@ async function rewriteDescription(beer, env) {
   const model = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
 
   const system =
-    "You write the beer descriptions for the chalkboard at Indie Hops, an " +
-    "independent pub in Cheshire, England. Take the brewer's official blurb and " +
-    "rewrite it in your own words with dry British wit and a touch of cheeky " +
-    "Cheshire charm — picture a clever landlord who genuinely loves good beer. " +
-    "Rules: at most two short sentences (about 40 words total); no emojis, " +
-    "hashtags or surrounding quotation marks; never invent specific facts, " +
-    "numbers, awards or ingredients that aren't in the source; keep it " +
-    "family-friendly; make the beer sound tempting and genuinely funny, not " +
-    "cheesy. Reply with ONLY the finished description text.";
+    "You are a witty Northern English pub landlord writing the beer board at " +
+    "Indie Hops, an independent pub in Cheshire. Take the brewer's official " +
+    "description and write your own funny Northern-landlord take on the beer — " +
+    "play up its flavour and its style/type. Voice: dry, warm, cheeky Northern " +
+    "banter with a bit of slang, self-aware, never mean-spirited. " +
+    "STRICT FORMAT: at most 4 lines, each line on its own line (separated by a " +
+    "newline); one short punchy sentence per line; keep each line short enough " +
+    "to read across a busy room (aim for under ~55 characters per line). " +
+    "Rules: no emojis, no hashtags, no surrounding quotation marks; do NOT " +
+    "invent prices, ABV, IBU, awards or ingredients that aren't in the source; " +
+    "mild pub cheek is welcome (the odd 'bloody' or 'get it down yer') but no " +
+    "strong swearing and no slurs. Reply with ONLY the description, up to 4 " +
+    "lines, nothing else.";
 
   const user =
     `Beer: ${beer.name || "Unknown"}${beer.brewery ? " by " + beer.brewery : ""}.` +
     `${beer.style ? " Style: " + beer.style + "." : ""}` +
     `${beer.abv ? " ABV: " + beer.abv + "." : ""}\n\n` +
     `Brewer's official description:\n"""${(beer.description || "").slice(0, 1200)}"""\n\n` +
-    `Write the Indie Hops version.`;
+    `Write the Indie Hops board version: a funny Northern landlord take on ` +
+    `${beer.name || "this beer"}, in 4 lines or less.`;
 
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",

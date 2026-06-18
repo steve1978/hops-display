@@ -59,6 +59,21 @@
       cards.push(b && b.name ? tapCard(b, i) : emptyTap(i));
     }
     grid.innerHTML = cards.join("");
+    fitDescriptions();
+  }
+
+  // Shrink each description's font until it fits its card — long landlord
+  // lines never overflow, short ones stay nice and big.
+  function fitDescriptions() {
+    grid.querySelectorAll(".tap .desc").forEach((el) => {
+      el.style.fontSize = "";                 // reset to the CSS base
+      let size = parseFloat(getComputedStyle(el).fontSize) || 21;
+      let guard = 0;
+      while (el.scrollHeight > el.clientHeight + 1 && size > 12 && guard++ < 30) {
+        size -= 1;
+        el.style.fontSize = size + "px";
+      }
+    });
   }
 
   function stamp(ok) {
@@ -79,13 +94,13 @@
   const DEMO = [
     { brewery: "Weetwood Ales", name: "Turncoat", style: "IPA - New England / Hazy", abv: "4% ABV", rating: "3.7",
       logo: "",
-      description: "Turncoat NEIPA is our take on a low-bitterness and high-flavour New England IPA at an agreeable ABV. Brewed with wheat and oats for pillowy soft mouthfeel and double dry-hopped with Citra, Mosaic and El Dorado for a juicy, tropical flavour." },
+      description: "A hazy little number that drinks well above its weight.\nPillowy soft, juicy as a Tuesday fruit bowl.\nCitra and Mosaic doing the heavy lifting, no bitterness.\nProper session sup — get one in." },
     { brewery: "Cloudwater", name: "DIPA v21", style: "IPA - Imperial / Double NE", abv: "8% ABV", rating: "4.3",
-      logo: "", description: "Soft, hazy and intensely tropical double IPA, double dry-hopped for waves of mango, pineapple and citrus over a smooth, full body." },
+      logo: "", description: "Don't be fooled, this one's a sneaky 8%.\nMango and pineapple by the bucketload.\nSmooth as you like, soft as a settee.\nTwo of these and you're calling a taxi." },
     { brewery: "Verdant", name: "Headband", style: "Pale Ale - American", abv: "5.5% ABV", rating: "4.1",
-      logo: "", description: "Our flagship pale. Citra and Simcoe deliver orange sherbet and pine, finishing soft and clean. Endlessly drinkable." },
+      logo: "", description: "The flagship pale that keeps the regulars happy.\nOrange sherbet and a bit of pine cheek.\nClean finish, no messing about.\nDangerously easy going, this." },
     { brewery: "Wild Beer Co", name: "Pogo", style: "Sour - Fruited", abv: "3.6% ABV", rating: "3.8",
-      logo: "", description: "A zingy, refreshing sour with passion fruit, guava and orange. Tart, bright and built for the sunshine." },
+      logo: "", description: "Zingy, tart and bright as a button.\nPassion fruit and guava having a party.\nLow ABV so you can stop here a while.\nSunshine in a glass, even when it's chucking it down." },
   ];
 
   async function load() {
@@ -119,4 +134,9 @@
   render([]);            // immediate empty grid so screen isn't blank
   load();
   setInterval(load, (window.HOPS_CONFIG && window.HOPS_CONFIG.REFRESH_MS) || 30000);
+
+  // Web fonts change text metrics — refit once they've loaded.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(fitDescriptions);
+  }
 })();

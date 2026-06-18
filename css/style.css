@@ -196,7 +196,7 @@ body.tv {
   color: var(--muted); font-size: 52px;
 }
 
-.tap .info { min-width: 0; }
+.tap .info { min-width: 0; display: flex; flex-direction: column; }
 .tap .brewery {
   font-family: 'Oswald', sans-serif;
   text-transform: uppercase;
@@ -236,11 +236,11 @@ body.tv {
 .chip.rating { color: var(--good); border-color: rgba(79,211,154,.4); }
 .tap .desc {
   font-size: 21px;
-  line-height: 1.5;
-  color: var(--muted);
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
+  line-height: 1.42;
+  color: #cdd6cf;
+  white-space: pre-line;   /* render the AI's 4 line breaks */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
 }
 
