@@ -60,7 +60,13 @@
           <div class="slot-actions">
             <button class="btn btn-sm" data-i="${i}" data-act="rewrite" ${b._rewriting ? "disabled" : ""}>↻ Funnier take</button>
             ${b.descriptionOriginal ? `<button class="btn btn-sm" data-i="${i}" data-act="orig">Use Untappd original</button>` : ""}
-          </div>` : `<div class="empty-slot">Empty — search above, or “Assign here”.</div>`}
+          </div>
+          <label class="fld" style="margin:14px 0 0">Prices (£)</label>
+          <div class="price-edit">
+            <div><span class="pe-label">1/2</span><input class="inp inp-price" inputmode="decimal" data-i="${i}" data-k="half" value="${esc((b.prices && b.prices.half) || "")}" placeholder="0.00" /></div>
+            <div><span class="pe-label">2/3</span><input class="inp inp-price" inputmode="decimal" data-i="${i}" data-k="twothirds" value="${esc((b.prices && b.prices.twothirds) || "")}" placeholder="0.00" /></div>
+            <div><span class="pe-label">Pint</span><input class="inp inp-price" inputmode="decimal" data-i="${i}" data-k="pint" value="${esc((b.prices && b.prices.pint) || "")}" placeholder="0.00" /></div>
+          </div>` : `<div class="empty-slot">Empty — search above and pick a tap number.</div>`}
       `;
       host.appendChild(div);
     }
@@ -87,6 +93,15 @@
       ta.addEventListener("input", () => {
         const i = +ta.dataset.i;
         if (beers[i]) beers[i].description = ta.value;
+      });
+    });
+    // Keep price edits in sync.
+    host.querySelectorAll("input.inp-price").forEach((inp) => {
+      inp.addEventListener("input", () => {
+        const i = +inp.dataset.i;
+        if (!beers[i]) return;
+        if (!beers[i].prices) beers[i].prices = { half: "", twothirds: "", pint: "" };
+        beers[i].prices[inp.dataset.k] = inp.value.trim();
       });
     });
   }
@@ -163,6 +178,7 @@
       if (!beer || !beer.name) throw new Error("Could not read that beer page");
       // Keep the Untappd text so the landlord can revert at any time.
       beer.descriptionOriginal = beer.description || "";
+      if (!beer.prices) beer.prices = { half: "", twothirds: "", pint: "" };
       beers[idx] = beer;
       renderSlots();
       toast(`Added “${beer.name}” to Tap ${idx + 1}`, "ok");

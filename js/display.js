@@ -29,6 +29,17 @@
       </div>`;
   }
 
+  function priceRow(label, val) {
+    if (!val) return "";
+    const v = /[£$€]/.test(val) ? val : "£" + val;
+    return `<div class="price"><span class="pl">${esc(label)}</span><span class="pv">${esc(v)}</span></div>`;
+  }
+  function pricesBlock(b) {
+    const p = b.prices || {};
+    const rows = priceRow("1/2", p.half) + priceRow("2/3", p.twothirds) + priceRow("Pint", p.pint);
+    return rows ? `<div class="prices">${rows}</div>` : "";
+  }
+
   function tapCard(b, i) {
     const logo = b.logo
       ? `<img class="logo" src="${esc(b.logo)}" alt="${esc(b.name)}" onerror="hopsLogoFail(this)" />`
@@ -42,7 +53,10 @@
     return `
       <div class="tap">
         <div class="tap-num">${i + 1}</div>
-        ${logo}
+        <div class="tapleft">
+          ${logo}
+          ${pricesBlock(b)}
+        </div>
         <div class="info">
           ${b.brewery ? `<div class="brewery">${esc(b.brewery)}</div>` : ""}
           <div class="name">${esc(b.name || "Untitled")}</div>
@@ -93,14 +107,17 @@
   }
   const DEMO = [
     { brewery: "Weetwood Ales", name: "Turncoat", style: "IPA - New England / Hazy", abv: "4% ABV", rating: "3.7",
-      logo: "",
+      logo: "", prices: { half: "2.60", twothirds: "3.40", pint: "5.10" },
       description: "A hazy little number that drinks well above its weight.\nPillowy soft, juicy as a Tuesday fruit bowl.\nCitra and Mosaic doing the heavy lifting, no bitterness.\nProper session sup — get one in." },
     { brewery: "Cloudwater", name: "DIPA v21", style: "IPA - Imperial / Double NE", abv: "8% ABV", rating: "4.3",
-      logo: "", description: "Don't be fooled, this one's a sneaky 8%.\nMango and pineapple by the bucketload.\nSmooth as you like, soft as a settee.\nTwo of these and you're calling a taxi." },
+      logo: "", prices: { half: "3.40", twothirds: "4.50", pint: "6.80" },
+      description: "Don't be fooled, this one's a sneaky 8%.\nMango and pineapple by the bucketload.\nSmooth as you like, soft as a settee.\nTwo of these and you're calling a taxi." },
     { brewery: "Verdant", name: "Headband", style: "Pale Ale - American", abv: "5.5% ABV", rating: "4.1",
-      logo: "", description: "The flagship pale that keeps the regulars happy.\nOrange sherbet and a bit of pine cheek.\nClean finish, no messing about.\nDangerously easy going, this." },
+      logo: "", prices: { half: "2.80", twothirds: "3.70", pint: "5.60" },
+      description: "The flagship pale that keeps the regulars happy.\nOrange sherbet and a bit of pine cheek.\nClean finish, no messing about.\nDangerously easy going, this." },
     { brewery: "Wild Beer Co", name: "Pogo", style: "Sour - Fruited", abv: "3.6% ABV", rating: "3.8",
-      logo: "", description: "Zingy, tart and bright as a button.\nPassion fruit and guava having a party.\nLow ABV so you can stop here a while.\nSunshine in a glass, even when it's chucking it down." },
+      logo: "", prices: { half: "2.50", twothirds: "3.30", pint: "4.90" },
+      description: "Zingy, tart and bright as a button.\nPassion fruit and guava having a party.\nLow ABV so you can stop here a while.\nSunshine in a glass, even when it's chucking it down." },
   ];
 
   async function load() {
