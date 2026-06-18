@@ -5,11 +5,22 @@
   const grid = document.getElementById("grid");
   const footer = document.getElementById("footer");
   const SLOTS = (window.HOPS_CONFIG && window.HOPS_CONFIG.SLOTS) || 4;
+  let lastBeers = [];
 
-  // Swap a broken logo <img> for the beer-glass placeholder.
+  // Phones/small touch screens get the list layout; TVs and laptops get the
+  // 2×2 stage. Width covers portrait + most landscape phones; the coarse-
+  // pointer check catches edge cases.
+  function isMobile() {
+    return window.innerWidth < 820 ||
+      (window.matchMedia("(pointer: coarse)").matches &&
+        Math.min(window.innerWidth, window.innerHeight) < 820);
+  }
+
+  // Swap a broken logo <img> for the beer-glass placeholder (keeps its class
+  // so it works for both the TV (.logo) and mobile (.m-logo) layouts).
   window.hopsLogoFail = function (img) {
     const d = document.createElement("div");
-    d.className = "logo placeholder";
+    d.className = img.className + " placeholder";
     d.textContent = "🍺";
     img.replaceWith(d);
   };
@@ -66,10 +77,53 @@
       </div>`;
   }
 
+  // ---- Mobile: a simple, readable vertical list ----
+  function mobilePrices(b) {
+    const p = b.prices || {};
+    const one = (l, v) => (v ? `<span class="m-price"><span class="pl">${esc(l)}</span><span class="pv">${/[£$€]/.test(v) ? esc(v) : "£" + esc(v)}</span></span>` : "");
+    const rows = one("1/2", p.half) + one("2/3", p.twothirds) + one("Pint", p.pint);
+    return rows ? `<div class="m-prices">${rows}</div>` : "";
+  }
+  function mobileRow(b, i) {
+    const logo = b.logo
+      ? `<img class="m-logo" src="${esc(b.logo)}" alt="${esc(b.name)}" onerror="hopsLogoFail(this)" />`
+      : `<div class="m-logo placeholder">🍺</div>`;
+    const chips = [];
+    if (b.abv)    chips.push(`<span class="chip abv">${esc(b.abv)}</span>`);
+    if (b.style)  chips.push(`<span class="chip">${esc(b.style)}</span>`);
+    if (b.rating) chips.push(`<span class="chip rating">★ ${esc(b.rating)}</span>`);
+    return `
+      <div class="m-row">
+        <div class="m-top">
+          ${logo}
+          <div class="m-head">
+            <span class="m-tapnum">Tap ${i + 1}</span>
+            ${b.brewery ? `<div class="brewery">${esc(b.brewery)}</div>` : ""}
+            <div class="name">${esc(b.name || "Untitled")}</div>
+          </div>
+        </div>
+        <div class="meta">${chips.join("")}</div>
+        ${b.description ? `<div class="desc">${esc(b.description)}</div>` : ""}
+        ${mobilePrices(b)}
+      </div>`;
+  }
+  function mobileEmpty(i) {
+    return `<div class="m-row empty"><div class="m-empty">Tap ${i + 1} — available</div></div>`;
+  }
+
   function render(beers) {
+    lastBeers = beers || [];
     const cards = [];
+    if (isMobile()) {
+      for (let i = 0; i < SLOTS; i++) {
+        const b = lastBeers[i];
+        cards.push(b && b.name ? mobileRow(b, i) : mobileEmpty(i));
+      }
+      grid.innerHTML = cards.join("");
+      return;                 // no fixed-stage fitting on mobile
+    }
     for (let i = 0; i < SLOTS; i++) {
-      const b = beers && beers[i];
+      const b = lastBeers[i];
       cards.push(b && b.name ? tapCard(b, i) : emptyTap(i));
     }
     grid.innerHTML = cards.join("");
@@ -142,20 +196,35 @@
   // so TV overscan crops the green border instead of the content.
   function fitStage() {
     const stage = document.querySelector(".stage");
-    if (!stage) return;
+    if (!stage || isMobile()) return;
     const safe = (window.HOPS_CONFIG && window.HOPS_CONFIG.SAFE_AREA) || 1;
     const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080) * safe;
     stage.style.transform = "scale(" + s + ")";
   }
-  window.addEventListener("resize", fitStage);
-  fitStage();
 
+  // Switch between TV (scaled 16:9 stage) and mobile (vertical list) layouts.
+  function applyMode() {
+    const m = isMobile();
+    document.body.classList.toggle("mobile", m);
+    document.body.classList.toggle("tv", !m);
+    const stage = document.querySelector(".stage");
+    if (m && stage) stage.style.transform = "";   // let it flow normally
+    else fitStage();
+  }
+
+  function onResize() {
+    applyMode();
+    render(lastBeers);   // re-render in case we crossed the mobile/TV threshold
+  }
+  window.addEventListener("resize", onResize);
+
+  applyMode();
   render([]);            // immediate empty grid so screen isn't blank
   load();
   setInterval(load, (window.HOPS_CONFIG && window.HOPS_CONFIG.REFRESH_MS) || 30000);
 
   // Web fonts change text metrics — refit once they've loaded.
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(fitDescriptions);
+    document.fonts.ready.then(() => { if (!isMobile()) fitDescriptions(); });
   }
 })();

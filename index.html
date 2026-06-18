@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="tv">
+  <script>
+    // Set the layout class before paint so phones don't flash the TV layout.
+    (function () {
+      var m = window.innerWidth < 820 ||
+        (window.matchMedia("(pointer: coarse)").matches &&
+          Math.min(window.innerWidth, window.innerHeight) < 820);
+      document.body.className = m ? "mobile" : "tv";
+    })();
+  </script>
   <div class="stage">
     <header class="topbar">
       <div class="brand">
