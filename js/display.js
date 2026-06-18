@@ -138,11 +138,13 @@
     }
   }
 
-  // Scale the fixed 1920×1080 stage to fit the window (letterboxed).
+  // Scale the fixed 1920×1080 stage to fit the window, with a safe-area inset
+  // so TV overscan crops the green border instead of the content.
   function fitStage() {
     const stage = document.querySelector(".stage");
     if (!stage) return;
-    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    const safe = (window.HOPS_CONFIG && window.HOPS_CONFIG.SAFE_AREA) || 1;
+    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080) * safe;
     stage.style.transform = "scale(" + s + ")";
   }
   window.addEventListener("resize", fitStage);

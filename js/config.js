@@ -11,4 +11,9 @@ window.HOPS_CONFIG = {
 
   // Number of taps on screen (2x2 grid = 4).
   SLOTS: 4,
+
+  // TV safe-area: how much of the screen the layout fills (1 = edge to edge).
+  // Many TVs "overscan" and crop the outer edges in fullscreen. Lower this if
+  // the edges (or the QR) get cut off; raise it toward 1 for a smaller border.
+  SAFE_AREA: 0.88,
 };
