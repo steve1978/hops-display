@@ -150,7 +150,7 @@ async function rewriteRoute(request, env, cors) {
 }
 
 async function rewriteDescription(beer, env) {
-  const model = env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free";
+  const model = env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
 
   const system =
     "You write the beer descriptions for the chalkboard at Indie Hops, an " +

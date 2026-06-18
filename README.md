@@ -98,11 +98,12 @@ npx wrangler deploy
 - The key lives only as a Cloudflare secret — never in the repo or the browser.
 - The rewrite endpoint is auth-gated (staff login required) so the key can't be
   abused publicly.
-- Default model: `meta-llama/llama-3.3-70b-instruct:free`. Override by adding
-  `OPENROUTER_MODEL = "…"` under `[vars]` in `wrangler.toml`.
-- Some free models need "model training" / prompt-logging allowed in your
-  OpenRouter privacy settings, and free tiers can rate-limit (HTTP 429). If a
-  rewrite fails, the console keeps the existing text and tells you why.
+- Default model: `openai/gpt-4o-mini` — cheap and reliable (a rewrite costs a
+  tiny fraction of a penny; you need a small credit balance on OpenRouter).
+  Override by adding `OPENROUTER_MODEL = "…"` under `[vars]` in `wrangler.toml`
+  (e.g. `openai/gpt-4.1-nano` for an even cheaper option).
+- If a rewrite fails (rate limit, no credit, etc.) the console keeps the
+  existing text and tells you exactly why — nothing breaks.
 
 ## Notes & limits
 

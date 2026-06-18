@@ -43,10 +43,7 @@
       div.innerHTML = `
         <div class="slot-head">
           <span class="n">Tap ${i + 1}</span>
-          <span>
-            <button class="btn" data-target="${i}" data-act="assign">${b ? "Replace" : "Assign here"}</button>
-            ${b ? `<button class="btn" data-target="${i}" data-act="clear">Clear</button>` : ""}
-          </span>
+          ${b ? `<button class="btn btn-sm" data-target="${i}" data-act="clear">Clear</button>` : ""}
         </div>
         ${b ? `
           <div class="filled">
@@ -130,6 +127,9 @@
       list.forEach((r) => {
         const el = document.createElement("div");
         el.className = "result";
+        const nums = Array.from({ length: SLOTS }, (_, n) =>
+          `<button class="btn btn-num${beers[n] ? " filled" : ""}" data-tap="${n}" title="${beers[n] ? "Replace Tap " + (n + 1) : "Put in Tap " + (n + 1)}">${n + 1}</button>`
+        ).join("");
         el.innerHTML = `
           <img src="${esc(r.logo || "")}" onerror="this.style.visibility='hidden'" alt="" />
           <div>
@@ -137,9 +137,11 @@
             <div class="r-by">${esc(r.brewery || "")}</div>
             <div class="r-style">${esc(r.style || "")}</div>
           </div>
-          <button class="btn btn-accent">Use → Tap ${pendingTarget + 1}</button>
+          <div class="use-group"><span class="use-label">Use →</span>${nums}</div>
         `;
-        el.querySelector("button").addEventListener("click", () => pickResult(r, el));
+        el.querySelectorAll("button.btn-num").forEach((btn) => {
+          btn.addEventListener("click", () => pickResult(r, el, +btn.dataset.tap));
+        });
         box.appendChild(el);
       });
     } catch (e) {
@@ -147,10 +149,13 @@
     }
   }
 
-  async function pickResult(r, el) {
-    const btn = el.querySelector("button");
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner"></span>`;
+  async function pickResult(r, el, idx) {
+    const group = el.querySelector(".use-group");
+    const clicked = el.querySelector(`button.btn-num[data-tap="${idx}"]`);
+    const buttons = el.querySelectorAll("button.btn-num");
+    buttons.forEach((b) => (b.disabled = true));
+    const label = clicked.textContent;
+    clicked.innerHTML = `<span class="spinner"></span>`;
     try {
       // Scrape full detail for the chosen beer page.
       const data = await API.scrape(r.url);
@@ -158,20 +163,21 @@
       if (!beer || !beer.name) throw new Error("Could not read that beer page");
       // Keep the Untappd text so the landlord can revert at any time.
       beer.descriptionOriginal = beer.description || "";
-      const idx = pendingTarget;
       beers[idx] = beer;
       renderSlots();
       toast(`Added “${beer.name}” to Tap ${idx + 1}`, "ok");
-      // advance to next empty slot for convenience
-      const next = beers.findIndex((b) => !b);
-      if (next !== -1) pendingTarget = next;
       // Auto-generate the Cheshire rewrite (non-blocking; keeps original on failure).
       regenerateDesc(idx);
     } catch (e) {
       toast("Couldn't load that beer: " + e.message, "err");
     } finally {
-      btn.disabled = false;
-      btn.textContent = `Use → Tap ${pendingTarget + 1}`;
+      clicked.textContent = label;
+      buttons.forEach((b) => (b.disabled = false));
+      // Reflect the newly-filled tap on every result row's number buttons.
+      if (beers[idx]) {
+        document.querySelectorAll(`.results button.btn-num[data-tap="${idx}"]`)
+          .forEach((b) => b.classList.add("filled"));
+      }
     }
   }
 

@@ -15,8 +15,9 @@ ALLOW_ORIGIN = "https://steve1978.github.io"
 binding = "BEERS"
 id = "7bb1007e196f4c7b97847fbd73e6c263"
 
-# Optional: override the free OpenRouter model used for the funny rewrites.
-# [vars] above can also hold:  OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+# Optional: override the OpenRouter model used for the funny rewrites.
+# Default is openai/gpt-4o-mini (cheap + reliable). [vars] above can also hold:
+#   OPENROUTER_MODEL = "openai/gpt-4.1-nano"
 
 # Secrets (do NOT put these here — set them with `wrangler secret put`):
 #   wrangler secret put ADMIN_USER
